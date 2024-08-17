@@ -19,7 +19,7 @@ if __name__ == "__main__":
         # Convert torch tensors to TTNN tensors
         y_ttnn = ttnn.from_torch(y, layout=ttnn.TILE_LAYOUT, device=device, dtype=ttnn.bfloat16)
         x_ttnn = ttnn.from_torch(x, layout=ttnn.TILE_LAYOUT, device=device, dtype=ttnn.bfloat16)
-        z_tt = ttnn_div(x_ttnn, y_ttnn) # TTNN division
+        z_tt = ttnn_div(x_ttnn, y_ttnn ) # TTNN division
 
         print(f"z_cpu: {z_cpu}")
         print(f"z_ttnn: {z_tt}")
