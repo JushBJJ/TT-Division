@@ -9,9 +9,9 @@ TypeError: unsupported operand type(s) for /: 'tt_lib.tensor.Tensor' and 'tt_lib
 Ever seen this before? Can't figure out why Tenstorrent doesn't have a division operator? Look no further! I got a solution for you.
 
 Simply multiply just multiply `x` by the reciprocol of `y`
-$$
+```math
 z = x * \frac{1}{y} = \frac{x}{y}
-$$
+```
 
 In python TTNN:
 ```python
