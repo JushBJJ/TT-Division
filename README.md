@@ -39,3 +39,5 @@ ttnn.Tensor([[ 1.99219,  0.00000,  ...,  0.00000,  0.00000],
 Reciprocal: https://docs.tenstorrent.com/ttnn/latest/ttnn/ttnn/reciprocal.html
 
 \*TT-Metal Implementation coming soon
+
+![Osaka Thousand Year Stare](https://i.redd.it/b064yxmkl0zb1.jpg)
