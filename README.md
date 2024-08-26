@@ -27,4 +27,28 @@ Expected: 2
 Test Passed
 ```
 
+## How to run TT-Metal
+```sh
+# 1. Make sure you have set the right environment variables and built TT-Metal
+export ARCH_NAME=<your device name (e.g "grayskull")>
+export TT_METAL_HOME=/your/path/to/tt-metal
+
+# If you haven't built TT-Metal, follow this:
+# https://github.com/tenstorrent/tt-metal/blob/main/INSTALLING.md
+
+# 2. Build project
+cd ./TT-Metal
+mkdir build
+
+cd build
+cmake ..
+
+make
+./tt-division
+
+# Or if you want to run with debug
+TT_METAL_DPRINT_CORES=0,0 TT_METAL_DPRINT_FILE=log.txt ./tt-division
+cat ./log.txt
+```
+
 ![Osaka Thousand Year Stare](https://i.redd.it/b064yxmkl0zb1.jpg)
