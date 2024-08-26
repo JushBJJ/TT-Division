@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     Program program = CreateProgram();
     constexpr CoreCoord core = {0, 0};
 
-    constexpr uint32_t single_tile = 32 * 32;
+    constexpr uint32_t single_tile = 32;
     tt_metal::InterleavedBufferConfig dram_config{
                 .device= device,
                 .size = single_tile,
