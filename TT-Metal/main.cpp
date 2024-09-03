@@ -15,7 +15,7 @@ int main(int argc, char **argv) {
     Program program = CreateProgram();
     constexpr CoreCoord core = {0, 0};
 
-    constexpr uint32_t single_tile = 32;
+    constexpr uint32_t single_tile = 1024 * 2; // A whole tile, leaving it to just 1024 will only fill half of the tile
     tt_metal::InterleavedBufferConfig dram_config{
                 .device= device,
                 .size = single_tile,
@@ -25,6 +25,7 @@ int main(int argc, char **argv) {
 
     std::shared_ptr<tt::tt_metal::Buffer> src0_dram_buffer = CreateBuffer(dram_config);
     std::shared_ptr<tt::tt_metal::Buffer> src1_dram_buffer = CreateBuffer(dram_config);
+    std::shared_ptr<tt::tt_metal::Buffer> intermed_dram_buffer = CreateBuffer(dram_config);
     std::shared_ptr<tt::tt_metal::Buffer> dst_dram_buffer = CreateBuffer(dram_config);
 
     auto src0_dram_noc_coord = src0_dram_buffer->noc_coordinates();
@@ -44,6 +45,7 @@ int main(int argc, char **argv) {
     constexpr uint32_t src0_cb_index = CB::c_in0;
     constexpr uint32_t src1_cb_index = CB::c_in1;
     constexpr uint32_t output_cb_index = CB::c_out0;
+    constexpr uint32_t intermed_cb_index = CB::c_intermed0;
 
     CircularBufferConfig src0_cb_config = CircularBufferConfig(
         single_tile,
@@ -58,9 +60,16 @@ int main(int argc, char **argv) {
         {{output_cb_index, tt::DataFormat::Float16_b}}
     ).set_page_size(output_cb_index, single_tile);
 
+    // Intermed CB
+    CircularBufferConfig intermed_cb_config = CircularBufferConfig(
+        single_tile,
+        {{intermed_cb_index, tt::DataFormat::Float16_b}}
+    ).set_page_size(intermed_cb_index, single_tile);
+
     // create CBs for src0, src1, src2, and output
     tt_metal::CreateCircularBuffer(program, core, src0_cb_config);
     tt_metal::CreateCircularBuffer(program, core, src1_cb_config);
+    tt_metal::CreateCircularBuffer(program, core, intermed_cb_config);
     tt_metal::CreateCircularBuffer(program, core, output_cb_config);
 
     KernelHandle reader_kernel = CreateKernel(
@@ -96,17 +105,21 @@ int main(int argc, char **argv) {
 
     std::vector<uint32_t> src0_vec;
     std::vector<uint32_t> src1_vec;
+    std::vector<uint32_t> intermed_vec;
     std::vector<uint32_t> output_vec;
 
     constexpr uint32_t src0_val = 2.0f;
     constexpr uint32_t src1_val = 4.0f;
+    constexpr uint32_t intermed_val = 0.0f;
 
     src0_vec = create_constant_vector_of_bfloat16(single_tile, src0_val);
     src1_vec = create_constant_vector_of_bfloat16(single_tile, src1_val);
+    intermed_vec = create_constant_vector_of_bfloat16(single_tile, intermed_val);
 
-    // write src0, src1, and src2 into their DRAM buffers
+    // write values into their DRAM buffers
     EnqueueWriteBuffer(cq, src0_dram_buffer, src0_vec, false);
     EnqueueWriteBuffer(cq, src1_dram_buffer, src1_vec, false);
+    EnqueueWriteBuffer(cq, intermed_dram_buffer, intermed_vec, false);
 
     auto reader_args = {
         src0_dram_buffer->address(),
@@ -123,20 +136,10 @@ int main(int argc, char **argv) {
     };
 
     SetRuntimeArgs(program, reader_kernel, core, reader_args);
-    SetRuntimeArgs(program, div_kernel, core, { 0 }); // Set do_mul to 0
+    SetRuntimeArgs(program, div_kernel, core, {}); // Set do_mul to 0
     SetRuntimeArgs(program, writer_kernel, core, writer_args);
     
     // EXECUTE!!!
-    EnqueueProgram(cq, program, false);
-    Finish(cq);
-    EnqueueReadBuffer(cq, dst_dram_buffer, output_vec, true);
-
-    // Copy the output buffer to the input buffer
-    EnqueueWriteBuffer(cq, src0_dram_buffer, output_vec, false);
-
-    SetRuntimeArgs(program, div_kernel, core, { 1 }); // Set do_mul to 1
-
-    // Run kernels again!!!!!
     EnqueueProgram(cq, program, false);
     Finish(cq);
 
