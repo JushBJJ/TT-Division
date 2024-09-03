@@ -22,10 +22,12 @@ ttnn.Tensor([[ 1.99219,  0.00000,  ...,  0.00000,  0.00000],
 
 Result (TT-Metal):
 ```
-Result: 1.99219
+Result: 2
 Expected: 2
 Test Passed
 ```
+
+\* There is a bug where it says `Result: 7.96875`, not sure why but when you run it again it will go back to 2. For some reason c_intermed0 switches between 1.99 and 0.50 when it should be empty.
 
 ## How to run TT-Metal
 ```sh
